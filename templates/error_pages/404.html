@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="col-md-6 mx-auto my-5 py-5">
+    <h1>404 Not Found</h1>
+
+    <p>お探しのページは見つかりませんでした</p>
+    <a class="text-danger mt-4" href="{{url_for('index')}}">TOPページに戻る</a> 
+  </div>
+{% endblock %}

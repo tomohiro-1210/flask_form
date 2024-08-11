@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- コンテンツ -->
+    <div class="container" style="margin-top:4rem;">
+      <div class="col-md-12 mx-auto my-5">
+
+          <!-- フォーム -->
+          <div class="row">
+            <div class="col-md-6 mx-auto mt-2">
+              <h2 class="text-center mb-3">ユーザー登録</h2>
+              <p class="text-center">ユーザー情報を登録してください</p>
+              <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                  {{ render_field(form.username, placeholder="ユーザー名") }}
+                </div>
+                <div class="mb-3">
+                  {{ render_field(form.email, placeholder="メールアドレス") }}
+                </div>
+                <div class="mb-3">
+                  {{ render_field(form.password, placeholder="パスワード") }}
+                </div>
+                <div class="mb-3">
+                  {{ render_field(form.pass_comfirm, placeholder="パスワード（確認用）") }}
+                </div>
+                {{ form.submit() }}
+              </form>
+          </div>
+         </div>
+      </div>
+    </div>
+{% endblock content %}
