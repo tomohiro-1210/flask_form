@@ -13,18 +13,20 @@
               <form method="POST">
                 {{ form.hidden_tag() }}
                 <div class="mb-3">
-                  {{ render_field(form.username, placeholder="ユーザー名") }}
+                  {{ render_field(form.username, placeholder="ユーザー名", class="form-control border border-success ") }}
                 </div>
                 <div class="mb-3">
-                  {{ render_field(form.email, placeholder="メールアドレス") }}
+                  {{ render_field(form.email, placeholder="メールアドレス", class="form-control border border-success ") }}
                 </div>
                 <div class="mb-3">
-                  {{ render_field(form.password, placeholder="パスワード") }}
+                  {{ render_field(form.password, placeholder="パスワード", class="form-control border border-success ") }}
                 </div>
                 <div class="mb-3">
-                  {{ render_field(form.pass_comfirm, placeholder="パスワード（確認用）") }}
+                  {{ render_field(form.pass_comfirm, placeholder="パスワード（確認用）", class="form-control border border-success ") }}
                 </div>
-                {{ form.submit() }}
+                <div class="text-center">
+                  {{ form.submit( class="btn btn-primary w-25") }}
+                </div>
               </form>
           </div>
          </div>
