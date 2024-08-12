@@ -23,11 +23,16 @@
               </tr>
             </thead>
             <tbody>
-              <tr >
-                <th scope="row">ID</th>
-                <td class="col-md-2">{{ session['username'] }}</td>
-                <td class="col-md-3">{{ session['email'] }}</td>
+              {% for user in users %}
+              <tr>
+                <th scope="row">{{ user.id }}</th>
+                <td class="col-md-2">{{ user.username }}</td>
+                <td class="col-md-3">{{ user.email }}</td>
+                {% if user.administrator == "0" %}
+                <td class="col-md-2">一般ユーザー</td>
+                {% elif user.administrator == "1" %}
                 <td class="col-md-2">管理者</td>
+                {% endif %}
                 <td class="col-md-2"><a href="#">ブログ投稿数</a></td>
                 <td class="col-md-2">
                   <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#user_delete">
@@ -35,6 +40,7 @@
                   </a>
                 </td>
               </tr>
+              {% endfor %}
             </tbody>
           </table>
           <!-- ページャー -->
