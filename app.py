@@ -1,4 +1,4 @@
-from flask import Flask,render_template,url_for,redirect, session ,flash
+from flask import Flask,render_template,url_for,redirect, session ,flash, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, ValidationError
 from wtforms.validators import DataRequired, Email, EqualTo
@@ -90,6 +90,27 @@ class BlogPost(db.Model):
     def __repr__(self):
         return f"PostId:{self.id}, Title:{self.title}, Author: {self.author} \n"
     
+# ユーザ更新のアップデート    
+class UpdateUserForm(FlaskForm):
+    email = StringField('メールアドレス', validators=[DataRequired(), Email(message='正しいメールアドレスを入力してください')])
+    username = StringField('ユーザー名', validators=[DataRequired()])
+    password = PasswordField('パスワード', validators=[EqualTo('pass_confirm', message="パスワードが一致していません")])
+    pass_confirm = PasswordField('パスワード(確認)')
+    submit = SubmitField('更新')
+
+    def __init__(self, user_id, *args, **kwargs):
+        super(UpdateUserForm, self).__init__(*args, **kwargs)
+        self.id = user_id
+
+    def validate_email(self, field):
+        if User.query.filter(User.id != self.id).filter_by(email=field.data).first():
+            raise ValidationError('入力されたメールアドレスは既に登録されています。')
+        
+    def validate_username(self, field):
+        if User.query.filter(User.id != self.id).filter_by(username=field.data).first():
+            raise ValidationError('入力されたユーザー名は既に使われています。')
+
+    
 # ユーザー登録
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -112,9 +133,46 @@ def register():
 # ユーザーの編集
 @app.route('/user_maintenance')
 def user_maintenance():
-    users = User.query.order_by(User.id).all()
+    # users = User.query.order_by(User.id).all() #全件取得
 
+    # ページャーを有効にする？
+    page = request.args.get('page', 1, type=int)
+    users = User.query.order_by(User.id).paginate(page=page, per_page=10) # 〇件ごとに取得
     return render_template('user_maintenance.html', users=users)
+
+#更新ページのURLや処理データ
+@app.route('/<int:user_id>/account', methods=['GET', 'POST'])
+def account(user_id):
+    user = User.query.get_or_404(user_id)
+    form = UpdateUserForm(user_id)
+    # データが格納された後の処理
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+
+        if form.password.data:
+            user.password_hash = form.password.data
+        db.session.commit()
+
+        flash('ユーザーが更新されました。')
+
+        return redirect(url_for('user_maintenance'))
+    # getメソッドで受診したときの処理
+    elif request.method == 'GET':
+        form.username.data = user.username
+        form.email.data = user.email
+
+    return render_template('account.html', form=form)
+
+# 削除処理
+@app.route('/<int:user_id>/delete', methods=['GET', 'POST'])
+def delete_user(user_id):
+    #削除処理
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('ユーザーアカウントが削除されました。')
+    return redirect(url_for('user_maintenance'))
 
 if __name__ == '__main__':
     app.run(debug=True)
