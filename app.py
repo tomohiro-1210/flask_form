@@ -2,6 +2,8 @@ from flask import Flask,render_template,url_for,redirect, session ,flash, reques
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, ValidationError
 from wtforms.validators import DataRequired, Email, EqualTo
+from flask_login import LoginManager, UserMixin, login_user
+from werkzeug.security import check_password_hash
 
 import os
 from flask import Flask
@@ -23,6 +25,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 Migrate(app, db)
 
+#ログインマネージャーのインスタンス化
+login_manager = LoginManager
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
 #Foreign Key（外部キー）の設定？
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
@@ -43,10 +51,14 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, field):
         if User.query.filter_by(email=field.data).first():
             raise ValidationError('入力されたメールアドレスは既に登録されています。')
-        
+
+#ログインmanager
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 
 # ユーザーモデルの設定
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +77,9 @@ class User(db.Model):
 
     def __repr__(self):
         return f"Username: {self.username}"
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
     
 
 # ブログ投稿のDBモデル
@@ -90,6 +105,11 @@ class BlogPost(db.Model):
     def __repr__(self):
         return f"PostId:{self.id}, Title:{self.title}, Author: {self.author} \n"
     
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email(message="正しいメールアドレスを入力してください")])
+    password = PasswordField('password', validators=[DataRequired()])
+    submit = SubmitField('ログイン')
+    
 # ユーザ更新のアップデート    
 class UpdateUserForm(FlaskForm):
     email = StringField('メールアドレス', validators=[DataRequired(), Email(message='正しいメールアドレスを入力してください')])
@@ -110,6 +130,31 @@ class UpdateUserForm(FlaskForm):
         if User.query.filter(User.id != self.id).filter_by(username=field.data).first():
             raise ValidationError('入力されたユーザー名は既に使われています。')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    #ログインフォームのインスタンス化
+    form = LoginForm()
+    # フォームのデータが送信されたとき
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        # ユーザーのデータがあったとき
+        if user is not None:
+            if user.check_password(form.password.data):
+                login_user(user)
+                next = request.args.get('next')
+
+                if next == None or not next[0] == '/':
+                    next = url_for('user_maintenance')
+                return redirect(next)
+
+
+            else:
+                flash('パスワードが一致しません')
+
+        else:
+            flash('入力されたユーザーは存在しません。')
+
+    return render_template('login.html', form=form)
     
 # ユーザー登録
 @app.route('/register', methods=['GET', 'POST'])
